@@ -17,7 +17,6 @@
 import sys
 from twisted.internet import reactor
 from serverspy import *
-from serverspytrem import *
 
 def scheduler():
 	reactor.callFromThread(spawnTrem)

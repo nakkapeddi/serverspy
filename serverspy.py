@@ -16,6 +16,13 @@
 
 from twisted.words.protocols import irc
 from twisted.internet import protocol
+from subprocess import PIPE, Popen
+import time
+
+def spawnTrem():
+	p = Popen(["/home/yarou/Downloads/tremulous/tremulous-tty", "+connect 69.9.166.166:30720"], stdin=PIPE, stdout=PIPE)
+	sleep(10)
+	return p
 
 class ServerSpy(irc.IRCClient):
 	def _get_nickname(self):
