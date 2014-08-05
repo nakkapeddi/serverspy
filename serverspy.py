@@ -13,12 +13,13 @@
 
 #You should have received a copy of the GNU Lesser General Public
 #License along with this library.
-
-from twisted.words.protocols import irc
-from twisted.internet import protocol
-from subprocess import PIPE, Popen
 import time
 import subprocess
+import sys
+from twisted.words.protocols import irc
+from twisted.internet import protocol, reactor, task
+from subprocess import PIPE, Popen
+
 
 def spawnTrem():
 	global p
@@ -35,7 +36,11 @@ class ServerSpy(irc.IRCClient):
 		print "Signed on as %s" % (self.nickname,)
 
 	def privmsg(self,user, channel, msg):
-		p.stdin.write('/say ' + '^7<' + user[0] + '> ' + msg + '\n')
+		ircNick = user.split('!', 1)[0]
+		if msg[0] == '@' and ircNick == 'Yarou':
+			p.stdin.write('/' + msg + '\n')
+		else:
+			p.stdin.write('/say ' + '^7<' + ircNick + '@IRC> ' + msg + '\n')
 
 class ServerSpyFactory(protocol.ClientFactory):
 	protocol = ServerSpy
@@ -49,3 +54,12 @@ class ServerSpyFactory(protocol.ClientFactory):
 		connector.connect()
 	def clientConnectionFailed(self, connector, reason):
 		print "Couldn't connect: %s" % (reason,)
+
+def scheduler():
+	reactor.callFromThread(spawnTrem)
+
+if __name__ == "__main__":
+	chan = sys.argv[1]
+	reactor.connectTCP('irc.freenode.net', 6667, ServerSpyFactory('#' + chan))
+	scheduler()
+	reactor.run()
