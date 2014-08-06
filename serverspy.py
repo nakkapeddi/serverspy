@@ -17,14 +17,17 @@ import time
 import subprocess
 import sys
 from twisted.words.protocols import irc
-from twisted.internet import protocol, reactor, task
+from twisted.internet import protocol, reactor, task, threads
 from subprocess import PIPE, Popen
 
+buffer = ""
 
 def spawnTrem():
 	global p
 	p = Popen(["/home/yarou/Downloads/tremulous/tremulous-tty", "+connect 69.9.166.166:30720"], stdin=PIPE, stdout=PIPE)
-	sleep(10)
+
+#def spawnReader():
+#	buffer = p.stdout.readline()
 
 class ServerSpy(irc.IRCClient):
 	def _get_nickname(self):
@@ -34,13 +37,21 @@ class ServerSpy(irc.IRCClient):
 	def signedOn(self):
 		self.join(self.factory.channel)
 		print "Signed on as %s" % (self.nickname,)
+#		lt = task.LoopingCall(self._clientpeek)
+#		lt.start(10)
+
+	def joined(self, channel):
+		print "Joined channel"
 
 	def privmsg(self,user, channel, msg):
 		ircNick = user.split('!', 1)[0]
 		if msg[0] == '@' and ircNick == 'Yarou':
-			p.stdin.write('/' + msg + '\n')
+			p.stdin.write('/' + msg[1:] + '\n')
 		else:
 			p.stdin.write('/say ' + '^7<' + ircNick + '@IRC> ' + msg + '\n')
+
+#	def _clientpeek(self):
+#		self.msg(self.factory.channel, buffer)
 
 class ServerSpyFactory(protocol.ClientFactory):
 	protocol = ServerSpy
